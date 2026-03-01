@@ -33,7 +33,6 @@
         }
 
         body {
-            /* Native system fonts for a clean app-like UI */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--ig-bg);
             color: #262626;
@@ -44,7 +43,6 @@
             padding: 20px;
         }
 
-        /* Main App Container */
         .app-container {
             display: flex;
             background: #ffffff;
@@ -56,7 +54,6 @@
             width: 100%;
         }
 
-        /* LEFT SIDE: Preview Section */
         .preview-section {
             padding: 40px;
             background-color: var(--ig-bg);
@@ -66,13 +63,12 @@
             align-items: center;
         }
 
-        /* Fake IG Feed Frame */
         .ig-mockup-frame {
             background: #fff;
             border: 1px solid var(--ig-border);
             border-radius: 8px;
             overflow: hidden;
-            width: 542px; /* 540px + 2px borders */
+            width: 542px; 
         }
 
         .ig-mockup-header {
@@ -101,7 +97,6 @@
             overflow: hidden;
         }
 
-        /* The actual exportable canvas */
         #ig-post {
             width: 1080px;
             height: 1080px;
@@ -125,18 +120,18 @@
             font-style: italic;
             margin-bottom: 35px;
             line-height: 1.5;
-            letter-spacing: 1px;
+            letter-spacing: 0px; /* Reduced to 0 */
             transition: color 0.3s ease;
         }
 
         .text-main {
             font-family: 'Montserrat', sans-serif;
-            font-size: 38px; 
+            font-size: 42px; /* Set a slightly higher default, JS will manage the rest */
             color: var(--text-coral);
             font-weight: 900;
             margin-bottom: 45px;
             line-height: 1.4;
-            letter-spacing: 1.5px;
+            letter-spacing: 0px; /* Removed the 1.5px spacing */
             transition: color 0.3s ease;
         }
 
@@ -146,11 +141,10 @@
             color: var(--text-dark);
             font-style: italic;
             line-height: 1.5;
-            letter-spacing: 1px;
+            letter-spacing: 0px; /* Reduced to 0 */
             transition: color 0.3s ease;
         }
 
-        /* RIGHT SIDE: Controls Section */
         .controls-section {
             padding: 40px;
             flex: 1;
@@ -200,7 +194,7 @@
         }
 
         .generate-btn {
-            margin-top: auto; /* Pushes button to the bottom */
+            margin-top: auto; 
             padding: 16px;
             background-color: var(--ig-blue);
             color: white;
@@ -217,7 +211,6 @@
             background-color: var(--ig-blue-hover);
         }
 
-        /* Responsive stack for smaller screens */
         @media (max-width: 900px) {
             .app-container {
                 flex-direction: column;
@@ -242,9 +235,11 @@
                 
                 <div class="preview-wrapper">
                     <div id="ig-post">
-                        <div class="text-intro" id="display-intro">The Prophet (sallallaahu ‘alayhi wa sallam) was asked,</div>
-                        <div class="text-main" id="display-main">"'Which of the women are best?' he replied, 'The one who pleases him when he looks at her, obeys him when he orders her and does not oppose him regarding herself or his wealth (and property) with what he dislikes.'"</div>
-                        <div class="text-source" id="display-source">Collected by Imaam Ahmad (2/251) and Imaam an-Nasaa’ee, “The Book of Marriage,” #3231</div>
+                        <div id="post-content" style="width: 100%;">
+                            <div class="text-intro" id="display-intro">The Prophet (sallallaahu ‘alayhi wa sallam) was asked,</div>
+                            <div class="text-main" id="display-main">"'Which of the women are best?' he replied, 'The one who pleases him when he looks at her, obeys him when he orders her and does not oppose him regarding herself or his wealth (and property) with what he dislikes.'"</div>
+                            <div class="text-source" id="display-source">Collected by Imaam Ahmad (2/251) and Imaam an-Nasaa’ee, “The Book of Marriage,” #3231</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -282,9 +277,6 @@
     </div>
 
     <script>
-        // =========================================================================
-        // 🎨 COLOR THEMES
-        // =========================================================================
         const themes = {
             theme1: {
                 bg: '#FFFBF1',       
@@ -297,7 +289,6 @@
                 otherText: '#222222'   
             }
         };
-        // =========================================================================
 
         const root = document.documentElement;
         const themeSelector = document.getElementById('theme-selector');
@@ -309,6 +300,27 @@
             root.style.setProperty('--text-dark', selectedTheme.otherText);
         });
 
+        // ---------------------------------------------------------
+        // FONT AUTO-SCALING LOGIC
+        // ---------------------------------------------------------
+        function adjustFontSize() {
+            const contentContainer = document.getElementById('post-content');
+            const mainTextEl = document.getElementById('display-main');
+            
+            // 1. Reset to the maximum desired font size before measuring
+            let currentSize = 42; 
+            mainTextEl.style.fontSize = currentSize + 'px';
+            
+            // 2. Calculate safe area: 1080px (total height) minus 280px (140px top + 140px bottom padding)
+            const maxHeight = 800;
+            
+            // 3. Shrink the font size by 1px iteratively until it fits the safe area
+            while (contentContainer.offsetHeight > maxHeight && currentSize > 20) {
+                currentSize--;
+                mainTextEl.style.fontSize = currentSize + 'px';
+            }
+        }
+
         const inputs = ['intro', 'main', 'source'];
         
         inputs.forEach(id => {
@@ -317,15 +329,19 @@
             
             inputEl.addEventListener('input', function() {
                 displayEl.innerText = this.value;
+                // Recalculate size every time a user types
+                adjustFontSize(); 
             });
         });
+
+        // Run scaling once on initial page load
+        adjustFontSize();
 
         function downloadImage() {
             const postElement = document.getElementById('ig-post');
             const btn = document.querySelector('.generate-btn');
             const originalText = btn.innerText;
             
-            // Visual feedback on the button
             btn.innerText = "Generating...";
             btn.style.opacity = "0.7";
 
@@ -345,7 +361,6 @@
                 link.href = canvas.toDataURL('image/png');
                 link.click();
 
-                // Reset button
                 btn.innerText = originalText;
                 btn.style.opacity = "1";
             }).catch(err => {
